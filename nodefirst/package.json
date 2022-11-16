@@ -1,7 +1,7 @@
 {
-  "name": "woonode",
+  "name": "node_first",
   "version": "1.0.0",
-  "description": "nodefiles",
+  "description": "node",
   "main": "index.js",
   "scripts": {
     "test": "test"
