@@ -60,8 +60,8 @@ readStream.on('end',()=>{
 readStream.on('error',(chunk)=>{
 
 });
-*/
 
+*/
 /*
 // 용량이 큰 파일을 생성
 
@@ -101,6 +101,7 @@ readStream.on('end',()=>{
 console.log('복사한 후 메모리 사용량: '+ process.memoryUsage().rss);
 
 */
+/*
 let today=new Date();
 console.log(today);
 console.log(today.getFullYear());
@@ -121,4 +122,4 @@ fs.access(dirname,(error)=>{
     }else{
         console.log("디렉터리 존재");
     }
-})
+})*/
