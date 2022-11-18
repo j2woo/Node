@@ -30,7 +30,7 @@ app.use(morgan('combined',{stream:accessLogStream}));
 // 사용자의 요청 처리
 // /는 포트번호까지의 요청
 app.get('/index',(req,res)=>{
-    
+
     console.log(req.ip);
     console.log(req.query);
         // 현재 디렉터리에 있는 main.html을 출력

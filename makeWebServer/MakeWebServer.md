@@ -97,10 +97,59 @@ http.createServer((request,response)=>{
 
 - 서버 중지는 터미널에서 ctrl+c인데 안되면 메세지 확인
 
-### 7) 서버에서 html  ->> 여기 메모장 보기
+### 7) 서버에서 html 파일을 읽어서 출력
+- 프로젝트에 출력할 html 파일을 만들고 작성 - index.html
+
+``` js
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Server</title>
+</head>
+<body>
+    <h1>HTML 파일을 읽어서 출력</h1>
+    <p>직접 출력을 만드는 것은 너무 번거롭기 때문에 HTML 파일을
+        만들어서 출력합니다.
+    </p>
+</body>
+</html>
+```
+
 - server.js 파일의 내용을 수정합니다.
+``` js
+//모듈 가져오기
+const { fstat } = require('fs');
+const http = require('http');
 
-
+//서버 생성
+//포트번호는 일반적으로 1024번까지는 예약되어 있으므로 사용하지 않음
+//1521, 3306, 27017 번은 데이터베이스가 사용
+//8080은 톰캣 같은 WebContainer 가 사용
+//80을 사용하게 되면 http 의 경우 포트번호 생략 가능
+//443을 사용하게 되면 https 의 경우 포트번호 생략 가능
+const fs = require('fs').promises; 
+http.createServer(async(request, response) => {
+    try{
+        //파일의 내용을 읽어서 data에 저장
+        //다음 명령은 이 명령이 끝나고 나면 수행
+        const data = await fs.readFile('./index.html');
+        //200이면 성공
+        response.writeHead(200, 
+            {'Content-Type':'text/html; charset=utf-8'});
+        response.end(data);
+    }catch(error){
+        response.writeHead(500, 
+            {'Content-Type':'text/html; charset=utf-8'});
+        response.end(error.message);
+    }
+    
+}).listen(8000, ()=>{
+    console.log('8000 번 포트에서 서버 대기 중');
+});
+```
 ### 8) request 객체
 - url: 클라이언트의 요청 경로  
 요청 경로를 만들 때는 이해하기 쉬운 경로를 만들어주어야하고 _ 사용은 하지 않는 것을 권장  
@@ -201,7 +250,10 @@ https를 사용하면 데이터 전송 간에는 암호화를 할 필요가 없�
 npm install express   
 npm install --save-dev nodemon
 
-## 3. package.json 파일으이 설정을 수정
+## 3. package.json 파일의 설정을 수정
+- main 속성에 시작 파일의 이름을 설정: app.js
+- scripts 속성에  "start":"nodemon app" 이라는 태그 추가  
+npm start라는 명령을 실행하면 nodemon app이라는 명령을 수행
 
 ## 4. express web server의 기본 틀
 ```const express =require("express"); // 모듈 가져오기  
@@ -275,8 +327,8 @@ request.sessions: 세션 객체
 <br/>
 이러한 정보의 대표적인 것이 데이터베이스 접속 위치와 API 키 입니다.
 
-## 10. Middle Ware
-- 사용자의 요청이 발생하고 서버가 요청을 처리하고 응답을 전송하는 시스템에서 요청을 처리하기 전이나 후에 동작할 내용을 수행하는 객체
+## 10. Middle Ware- Filter, Aop
+- 클라이언트의 요청이 발생하고 서버가 요청을 처리하고 응답을 전송하는 시스템에서 요청을 처리하기 전이나 후에 동작할 내용을 수행하는 객체
 - 요청을 처리하기 전에 수행하는 일은 필터링이고 요청을 처리한 후 수행하는 일은 변환입니다.  
 필터링을 할 때는 유효성 검사 작업과 로그인 확인 작업이 대표적입니다.
 - node에서는 app.use(미들웨어) 형태로 장착  
@@ -309,7 +361,7 @@ HTTP요청방식 요쳥URL 상태코드 응답속도 트래픽
 - 조금 더 자세한 로그를 원하는 경우에는 winston 패키지를 사용
 
 ### 2) 날짜 별로 로그 파일에 로그를 기록
-- 패키지 설치: mor  
+- 패키지 설치: morgan, file-stream-rotator  
 npm install morgan file-stream-rotator
 - 서버를 다시 실행하고 log 디렉터리와 오늘 날짜로 된 파일이 생성되는지 확인해보고 브라우저에 접속한 후 로그 파일을 확인
 
@@ -360,4 +412,54 @@ request객체.cookies 하게 되면 모든 쿠키가 넘어오게 됩니다.
 이런 경우에는 세션을 파일이나 데이터베이스에 유지하는 것이 좋습니다.
 
 ### 8) 세션을 사용하는 예제: 새로 고침을 하면 이전 내용에 +1을 해서 출력하기
+- 세션을 사용하기 위해서는 express-session 패키지 이용
+- 세션은 접속한 브라우저 별로 따로 생성됩니다.
+- nodeserver.js 파일을 만들고 작성
+//노드에서는 다른 모듈을 가져올 때 require를 사용
+``` js
+const express = require('express');
+
+//웹 서버를 생성할 수 있는 인스턴스를 생성
+const app = express();
+
+//포트 설정(1024번까지는 예약된 포트)
+//80번은 http 의 기본 포트, 443번은 https의 기본 포트
+app.set('port', 4000);
+
+//요청을 처리하는 함수 외부에 만든 변수는
+//모든 사용자가 공유합니다.
+let num = 1;
+//세션을 사용하기 위한 모듈 가져오기
+const session = require('express-session');
+//세션을 사용하기 위한 미들웨어 설정
+//세션은 클라이언트에 키를 만들어서 매핑을 합니다.
+//이 때 key의 값을 알아보기 어렵게 하기 위해서 연산을 수행할 
+//값을 주게되는데 이 값이 secret 입니다.
+app.use(session({
+    secret:"keyboard cat",
+    resave:false,
+    saveUninitialized:true
+}))
+
+//사용자의 요청 처리
+app.get("/session", (req, res) => {
+    //세션에 num의 값이 없으면 1로 초기화 하고 있으면 1 증가
+    if(!req.session.num){
+        req.session.num = 1;
+    }else{
+        req.session.num += 1;
+    }
+    //내용을 화면에 출력
+    res.send("num:" + num + "<br/>" +
+         "session의 num:" + req.session.num);
+    num = num + 1;
+})
+
+//서버를 실행시켜서 사용자의 요청을 처리
+app.listen(app.get('port'), ()=>{
+    console.log("서버 대기 중");
+});
+```
+
+=>브라우저에서 접속을 하고 새로 고침을 한 후 다른 브라우저에서 동일한 URL로 접속해서 num 과 req.session.num을 비교
 
